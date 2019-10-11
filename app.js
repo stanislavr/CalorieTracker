@@ -1,4 +1,70 @@
 // Storage Controller
+const StorageCtrl = (function() {
+  // public methods
+  return {
+    storeItem: function(item) {
+      let items;
+      // check if any items in ls
+      if (
+        localStorage.getItem("items") === null ||
+        localStorage.getItem("items") === ""
+      ) {
+        items = [];
+        // push new item
+        items.push(item);
+        // set ls
+        localStorage.setItem("items", JSON.stringify(items));
+      } else {
+        // get all existing items in ls
+        items = JSON.parse(localStorage.getItem("items"));
+        // push new item
+        items.push(item);
+        // re-set ls
+        localStorage.setItem("items", JSON.stringify(items));
+      }
+    },
+    getItemsFromStorage: function() {
+      let items;
+      if (
+        localStorage.getItem("items") === null ||
+        localStorage.getItem("items") === ""
+      ) {
+        items = [];
+      } else {
+        items = JSON.parse(localStorage.getItem("items"));
+      }
+      return items;
+    },
+    updateItemStorage: function(updatedItem) {
+      // get all existing items
+      let items = JSON.parse(localStorage.getItem("items"));
+      // find and replace updated item
+      items.forEach((item, index) => {
+        if (updatedItem.id === item.id) {
+          items.splice(index, 1, updatedItem);
+        }
+      });
+      // re-set items in ls
+      localStorage.setItem("items", JSON.stringify(items));
+    },
+    deleteItemStorage: function(deletedItemId) {
+      // get all existing items
+      let items = JSON.parse(localStorage.getItem("items"));
+      // find and delete the item by id
+      items.forEach((item, index) => {
+        if (deletedItemId === item.id) {
+          items.splice(index, 1);
+        }
+      });
+      // re-set items in ls
+      localStorage.setItem("items", JSON.stringify(items));
+    },
+    deleteAllItemsFromStorage: function() {
+      // clear items in ls
+      localStorage.setItem("items", []);
+    }
+  };
+})();
 
 // Item Controller
 const ItemCtrl = (function() {
@@ -11,11 +77,12 @@ const ItemCtrl = (function() {
 
   // Data Structure / State
   const data = {
-    items: [
-      new Item(0, "Steak Dinner", 1200),
-      new Item(1, "Muffin", 500),
-      new Item(2, "Pizza", 700)
-    ],
+    // items: [
+    //   new Item(0, "Steak Dinner", 1200),
+    //   new Item(1, "Muffin", 500),
+    //   new Item(2, "Pizza", 700)
+    // ],
+    items: StorageCtrl.getItemsFromStorage(),
     currentItem: null,
     totalCalories: 0
   };
@@ -226,7 +293,7 @@ const UICtrl = (function() {
 })();
 
 // App Controller
-const App = (function(ItemCtrl, UICtrl) {
+const App = (function(ItemCtrl, StorageCtrl, UICtrl) {
   // Load all event listeners
   const loadEventListeners = function() {
     // get UI selectors
@@ -292,6 +359,9 @@ const App = (function(ItemCtrl, UICtrl) {
 
       // clear input fields
       UICtrl.clearInputFields();
+
+      // store in local storage
+      StorageCtrl.storeItem(newItem);
     }
   };
 
@@ -335,6 +405,9 @@ const App = (function(ItemCtrl, UICtrl) {
     // add total calories to UI
     UICtrl.showTotalCalories(totalCalories);
 
+    // update ls
+    StorageCtrl.updateItemStorage(updatedItem);
+
     UICtrl.clearEditState();
   };
 
@@ -355,6 +428,9 @@ const App = (function(ItemCtrl, UICtrl) {
     // add total calories to UI
     UICtrl.showTotalCalories(totalCalories);
 
+    // delete from ls
+    StorageCtrl.deleteItemStorage(currentItem.id);
+
     UICtrl.clearEditState();
   };
 
@@ -370,6 +446,9 @@ const App = (function(ItemCtrl, UICtrl) {
     const totalCalories = ItemCtrl.getTotalCalories();
     // add total calories to UI
     UICtrl.showTotalCalories(totalCalories);
+
+    // delete all from the storage
+    StorageCtrl.deleteAllItemsFromStorage();
 
     // hide the list
     UICtrl.hideList();
@@ -401,7 +480,7 @@ const App = (function(ItemCtrl, UICtrl) {
       loadEventListeners();
     }
   };
-})(ItemCtrl, UICtrl);
+})(ItemCtrl, StorageCtrl, UICtrl);
 
 // Initialize App
 App.init();
